@@ -438,6 +438,52 @@ The default simulation currently highlights:
 - `speaker_01` as critical
 - `sensor_01` as warning
 
+## N-BaIoT Dataset Workflow
+
+You can run the backend with either:
+
+- synthetic demo telemetry (`backend/dataset/iot_sample.csv`)
+- preprocessed N-BaIoT telemetry (`backend/dataset/iot_sample_n_baiot.csv`)
+
+### 1. Extract N-BaIoT archive
+
+```powershell
+Set-Location .
+python -c "import zipfile, pathlib; z=zipfile.ZipFile('datasets/n-baiot.zip'); out=pathlib.Path('datasets/n-baiot'); out.mkdir(parents=True, exist_ok=True); z.extractall(out)"
+```
+
+### 2. Preprocess N-BaIoT into backend telemetry format
+
+```powershell
+Set-Location .
+python backend/scripts/preprocess_n_baiot.py
+```
+
+This creates:
+
+- `backend/dataset/iot_sample_n_baiot.csv`
+
+The preprocessing script maps N-BaIoT statistical features into the backend schema:
+
+- `device_id`, `timestamp`, `src_ip`, `dest_ip`, `dest_port`, `protocol`, `bytes`, `packets`
+
+It can also inject attack-like windows at the end of selected device timelines so trust degradation remains visible for demos.
+
+### 3. Switch backend source
+
+Use `PHANTOM_DATA_SOURCE` before starting FastAPI:
+
+```powershell
+# Synthetic demo data (default)
+$env:PHANTOM_DATA_SOURCE = "synthetic"
+
+# Preprocessed N-BaIoT data
+$env:PHANTOM_DATA_SOURCE = "n_baiot"
+
+Set-Location .\backend
+uvicorn app.main:app --reload
+```
+
 ## Local Development Workflow
 
 ### 1. Start the backend
@@ -476,6 +522,7 @@ npm run build
 
 - The frontend reads `VITE_API_BASE_URL` if you want to point it to a different backend URL.
 - If `VITE_API_BASE_URL` is not set, it defaults to `http://127.0.0.1:8000`.
+- The backend reads `PHANTOM_DATA_SOURCE` with supported values: `synthetic` or `n_baiot`.
 
 ## Demo Presentation Workflow
 

@@ -6,16 +6,16 @@ const links = [
   { to: '/network', label: 'Network Map' },
 ];
 
-export default function Navbar({ theme, onToggleTheme }) {
+export default function Navbar() {
   return (
     <header className="topbar sticky top-0 z-20">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.35em] text-[var(--accent-primary)]">Phantom Nexus</p>
-          <h1 className="font-display text-2xl font-semibold text-[var(--text-primary)]">IoT Recruitment Risk Command</h1>
+          <h1 className="font-display text-2xl font-semibold">IoT Recruitment Risk Command</h1>
+          <p className="mt-1 text-xs soft-label">Behavioral trust intelligence for connected devices</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <nav className="nav-shell flex flex-wrap items-center gap-2 rounded-full p-1">
+        <nav className="nav-shell flex flex-wrap items-center gap-2 rounded-full p-1">
           {links.map((link) => (
             <NavLink
               key={link.to}
@@ -29,16 +29,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               {link.label}
             </NavLink>
           ))}
-          </nav>
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="theme-toggle rounded-full px-4 py-2 text-sm font-medium"
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          >
-            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          </button>
-        </div>
+        </nav>
       </div>
     </header>
   );

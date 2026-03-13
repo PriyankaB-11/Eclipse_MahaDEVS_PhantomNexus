@@ -68,14 +68,22 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <section className="page-hero rounded-3xl p-6">
+        <p className="font-mono text-xs uppercase tracking-[0.34em] text-[var(--accent-primary)]">SOC Overview</p>
+        <h2 className="mt-2 font-display text-3xl font-semibold">Fleet posture and early recruitment risk</h2>
+        <p className="mt-2 max-w-3xl text-sm soft-label">
+          Monitor trust degradation, drift movement, and propagation pressure across connected IoT assets from one incident-oriented view.
+        </p>
+      </section>
+
       <section className="grid gap-4 md:grid-cols-3">
         {[
-          { label: 'Total Devices', value: devices.length, accent: 'text-glow' },
-          { label: 'Risky Devices', value: riskyDevices.length, accent: 'text-amber-300' },
-          { label: 'Average Trust Score', value: averageTrust, accent: 'text-white' },
+          { label: 'Total Devices', value: devices.length, accent: 'text-[var(--accent-primary)]' },
+          { label: 'Risky Devices', value: riskyDevices.length, accent: 'text-[var(--warning-text)]' },
+          { label: 'Average Trust Score', value: averageTrust, accent: 'kpi-number' },
         ].map((stat) => (
-          <div key={stat.label} className="panel rounded-3xl p-6">
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-mist">{stat.label}</p>
+          <div key={stat.label} className="surface-card rounded-3xl p-6">
+            <p className="font-mono text-xs uppercase tracking-[0.3em] soft-label">{stat.label}</p>
             <p className={`mt-4 font-mono text-4xl font-semibold ${stat.accent}`}>{stat.value}</p>
           </div>
         ))}

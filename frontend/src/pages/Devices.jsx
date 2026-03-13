@@ -24,10 +24,10 @@ export default function Devices() {
 
   return (
     <div className="space-y-6">
-      <section className="panel rounded-3xl p-6">
-        <p className="font-mono text-xs uppercase tracking-[0.35em] text-glow/80">Fleet Inventory</p>
+      <section className="page-hero rounded-3xl p-6">
+        <p className="font-mono text-xs uppercase tracking-[0.35em] text-[var(--accent-primary)]">Fleet Inventory</p>
         <h2 className="mt-2 font-display text-3xl font-semibold">Device posture and trust status</h2>
-        <p className="mt-2 max-w-3xl text-sm text-mist">
+        <p className="mt-2 max-w-3xl text-sm soft-label">
           Review current trust scores, active anomalies, and botnet recruitment probability across the monitored IoT estate.
         </p>
       </section>

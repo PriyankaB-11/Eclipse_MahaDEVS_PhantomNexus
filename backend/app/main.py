@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .botnet_detector import detect_botnet_patterns
-from .data_loader import DATASET_PATH, load_telemetry
+from .data_loader import load_telemetry, resolve_dataset_path
 from .drift_detection import detect_drift
 from .explainability import build_explainability_report
 from .feature_engineering import engineer_device_windows
@@ -116,7 +116,7 @@ class PhantomNexusService:
         return self._snapshot
 
 
-service = PhantomNexusService(DATASET_PATH)
+service = PhantomNexusService(resolve_dataset_path())
 app = FastAPI(title="Phantom Nexus API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,

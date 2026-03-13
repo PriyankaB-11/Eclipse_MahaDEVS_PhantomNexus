@@ -18,17 +18,18 @@ function DeviceNode({ data }) {
     <>
       <Handle type="target" position={Position.Left} className="!h-3 !w-3 !border-0 !bg-slate-500/60" />
       <div
-        className="min-w-[190px] rounded-[22px] border px-4 py-3 text-slate-900"
+        className="min-w-[190px] rounded-[22px] border px-4 py-3"
         style={{
           borderColor: `${tone}55`,
           background: 'var(--graph-node-bg)',
           boxShadow: `0 0 0 1px ${tone}26, var(--graph-node-shadow)`,
+          color: 'var(--text-primary)',
         }}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="font-display text-base font-semibold">{data.label}</div>
-            <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.24em] text-slate-500">{data.riskLevel}</div>
+            <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.24em] soft-label">{data.riskLevel}</div>
           </div>
           <div
             className="rounded-full px-2 py-1 font-mono text-xs font-semibold"
@@ -39,11 +40,11 @@ function DeviceNode({ data }) {
         </div>
         <div className="mt-3 space-y-2">
           <div>
-            <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] soft-label">
               <span>Propagated Trust</span>
               <span>{Math.round(Number(data.propagatedTrust ?? 0))}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+            <div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: 'var(--surface-subtle)' }}>
               <div
                 className="h-full rounded-full transition-all"
                 style={{
@@ -53,14 +54,16 @@ function DeviceNode({ data }) {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-2">
+          <div className="grid grid-cols-2 gap-2 text-xs soft-label">
+            <div className="rounded-xl border px-2 py-2" style={{ borderColor: 'var(--border-soft)', backgroundColor: 'var(--surface-subtle)' }}>
               <div className="uppercase tracking-[0.14em] text-[10px]">Base</div>
-              <div className="mt-1 font-mono text-slate-900">{Number(data.trustScore ?? 0).toFixed(1)}</div>
+              <div className="mt-1 font-mono" style={{ color: 'var(--text-primary)' }}>
+                {Number(data.trustScore ?? 0).toFixed(1)}
+              </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-2">
+            <div className="rounded-xl border px-2 py-2" style={{ borderColor: 'var(--border-soft)', backgroundColor: 'var(--surface-subtle)' }}>
               <div className="uppercase tracking-[0.14em] text-[10px]">Decay</div>
-              <div className="mt-1 font-mono text-slate-900">
+              <div className="mt-1 font-mono" style={{ color: 'var(--text-primary)' }}>
                 {(Number(data.trustScore ?? 0) - Number(data.propagatedTrust ?? 0)).toFixed(1)}
               </div>
             </div>
@@ -108,18 +111,18 @@ function mapGraphToEdges(graph) {
     animated: Number(edge.flows ?? 0) > 10,
     markerEnd: {
       type: MarkerType.ArrowClosed,
-      color: 'rgba(71, 85, 105, 0.55)',
+      color: 'var(--graph-edge)',
     },
     style: {
-      stroke: 'rgba(71, 85, 105, 0.45)',
+      stroke: 'var(--graph-edge)',
       strokeWidth: Math.max(1.6, Number(edge.flows ?? 0) / 8),
     },
     labelStyle: {
-      fill: '#475569',
+      fill: 'var(--chart-axis)',
       fontSize: 11,
     },
     labelBgStyle: {
-      fill: 'rgba(255, 255, 255, 0.95)',
+      fill: 'var(--chart-tooltip-bg)',
       fillOpacity: 1,
     },
     labelBgPadding: [6, 3],
@@ -153,10 +156,10 @@ export default function NetworkGraph({ graph, height = 480 }) {
     return (
       <div className="panel rounded-3xl p-6">
         <div className="mb-4">
-          <h2 className="font-display text-xl font-semibold text-slate-900">Propagation Graph</h2>
-          <p className="text-sm text-slate-500">No graph data is available for the current simulation snapshot.</p>
+          <h2 className="font-display text-xl font-semibold">Propagation Graph</h2>
+          <p className="text-sm soft-label">No graph data is available for the current simulation snapshot.</p>
         </div>
-        <div className="rounded-[24px] border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-sm text-slate-500">
+        <div className="rounded-[24px] border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center text-sm soft-label">
           Start the backend dataset generator and reload the dashboard to render communication paths.
         </div>
       </div>
@@ -164,36 +167,48 @@ export default function NetworkGraph({ graph, height = 480 }) {
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_22px_55px_rgba(148,163,184,0.16)] sm:p-5">
+    <div className="surface-card rounded-3xl p-4 sm:p-5">
       <div className="mb-4 grid gap-4 px-2 pt-2 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
-          <h2 className="font-display text-xl font-semibold text-slate-900">Propagation Graph</h2>
-          <p className="text-sm text-slate-600">Edges represent internal communication. Critical nodes spread trust decay through the local neighborhood, exposing likely blast radius.</p>
+          <h2 className="font-display text-xl font-semibold">Propagation Graph</h2>
+          <p className="text-sm soft-label">Edges represent internal communication. Critical nodes spread trust decay through the local neighborhood, exposing likely blast radius.</p>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-3">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-red-500">Critical</div>
-            <div className="mt-1 font-mono text-xl text-slate-900">{criticalNodes}</div>
+          <div className="rounded-2xl px-3 py-3" style={{ border: '1px solid var(--critical-border)', background: 'var(--critical-bg)' }}>
+            <div className="text-[11px] uppercase tracking-[0.18em]" style={{ color: 'var(--critical-text)' }}>Critical</div>
+            <div className="mt-1 font-mono text-xl" style={{ color: 'var(--text-primary)' }}>
+              {criticalNodes}
+            </div>
           </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-amber-600">Warning</div>
-            <div className="mt-1 font-mono text-xl text-slate-900">{warningNodes}</div>
+          <div className="rounded-2xl px-3 py-3" style={{ border: '1px solid var(--warning-border)', background: 'var(--warning-bg)' }}>
+            <div className="text-[11px] uppercase tracking-[0.18em]" style={{ color: 'var(--warning-text)' }}>Warning</div>
+            <div className="mt-1 font-mono text-xl" style={{ color: 'var(--text-primary)' }}>
+              {warningNodes}
+            </div>
           </div>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-600">Avg Decay</div>
-            <div className="mt-1 font-mono text-xl text-slate-900">{averageDecay}</div>
+          <div className="rounded-2xl px-3 py-3" style={{ border: '1px solid var(--success-border)', background: 'var(--success-bg)' }}>
+            <div className="text-[11px] uppercase tracking-[0.18em]" style={{ color: 'var(--success-text)' }}>Avg Decay</div>
+            <div className="mt-1 font-mono text-xl" style={{ color: 'var(--text-primary)' }}>
+              {averageDecay}
+            </div>
           </div>
         </div>
       </div>
-      <div className="mb-4 flex flex-wrap items-center gap-2 px-2 text-xs text-slate-600">
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Node halo = propagated trust</span>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Arrow thickness = flow volume</span>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Animated edge = heavy internal chatter</span>
-        <span className={`ml-auto rounded-full px-3 py-1 font-mono ${isInteractive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
+      <div className="mb-4 flex flex-wrap items-center gap-2 px-2 text-xs soft-label">
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Node halo = propagated trust</span>
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Arrow thickness = flow volume</span>
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Animated edge = heavy internal chatter</span>
+        <span
+          className="ml-auto rounded-full border px-3 py-1 font-mono"
+          style={isInteractive
+            ? { background: 'var(--success-bg)', color: 'var(--success-text)', borderColor: 'var(--success-border)' }
+            : { background: 'var(--surface-subtle)', color: 'var(--text-muted)', borderColor: 'var(--border-soft)' }
+          }
+        >
           {isInteractive ? 'interactive' : 'locked'}
         </span>
       </div>
-      <div className="overflow-hidden rounded-[24px] border border-slate-200" style={{ height, background: 'var(--graph-canvas-bg)' }}>
+      <div className="overflow-hidden rounded-[24px] border border-white/10" style={{ height, background: 'var(--graph-canvas-bg)' }}>
         <ReactFlow
           colorMode="dark"
           fitView

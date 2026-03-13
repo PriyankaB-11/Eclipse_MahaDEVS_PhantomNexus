@@ -26,12 +26,12 @@ export default function DeviceView() {
   }
 
   if (!detail) {
-    return <div className="panel rounded-3xl p-6 text-mist">Loading device investigation...</div>;
+    return <div className="surface-card rounded-3xl p-6 soft-label">Loading device investigation...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <Link className="inline-flex rounded-full border border-white/10 px-4 py-2 text-sm text-mist hover:bg-white/5 hover:text-white" to="/devices">
+      <Link className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm soft-label hover:bg-white/10" to="/devices">
         Back to Devices
       </Link>
       <DeviceDetail detail={detail} />
