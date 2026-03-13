@@ -1,0 +1,10 @@
+backend/__pycache__/
+backend/app/__pycache__/
+backend/dataset/*.tmp
+frontend/node_modules/
+frontend/dist/
+*.pyc
+*.pyo
+*.pyd
+.env
+.DS_Store
