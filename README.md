@@ -440,102 +440,188 @@ The default simulation currently highlights:
 
 ## N-BaIoT Dataset Workflow
 
-You can run the backend with either:
+You can optionally run the backend against real N-BaIoT network traffic instead of synthetic data.
 
-- synthetic demo telemetry (`backend/dataset/iot_sample.csv`)
-- preprocessed N-BaIoT telemetry (`backend/dataset/iot_sample_n_baiot.csv`)
+> **Download the dataset first** from the [UCI ML Repository — N-BaIoT](https://archive.ics.uci.edu/dataset/442/detection+of+iot+botnet+attacks+n+baiot) and save it as `datasets/n-baiot.zip` in the project root. The raw dataset is several GB and is **not included in this repository**.
 
 ### 1. Extract N-BaIoT archive
 
 ```powershell
-Set-Location .
 python -c "import zipfile, pathlib; z=zipfile.ZipFile('datasets/n-baiot.zip'); out=pathlib.Path('datasets/n-baiot'); out.mkdir(parents=True, exist_ok=True); z.extractall(out)"
 ```
 
 ### 2. Preprocess N-BaIoT into backend telemetry format
 
 ```powershell
-Set-Location .
 python backend/scripts/preprocess_n_baiot.py
 ```
 
-This creates:
-
-- `backend/dataset/iot_sample_n_baiot.csv`
+This creates `backend/dataset/iot_sample_n_baiot.csv`.
 
 The preprocessing script maps N-BaIoT statistical features into the backend schema:
 
 - `device_id`, `timestamp`, `src_ip`, `dest_ip`, `dest_port`, `protocol`, `bytes`, `packets`
 
-It can also inject attack-like windows at the end of selected device timelines so trust degradation remains visible for demos.
+It also injects attack-like windows at the end of selected device timelines so trust degradation remains visible for demos.
 
 ### 3. Switch backend source
 
-Use `PHANTOM_DATA_SOURCE` before starting FastAPI:
-
 ```powershell
-# Synthetic demo data (default)
-$env:PHANTOM_DATA_SOURCE = "synthetic"
-
-# Preprocessed N-BaIoT data
 $env:PHANTOM_DATA_SOURCE = "n_baiot"
-
-Set-Location .\backend
+cd backend
 uvicorn app.main:app --reload
 ```
 
-## Local Development Workflow
+## Getting Started
 
-### 1. Start the backend
+### Prerequisites
+
+- Python 3.10 or higher
+- Node.js 18 or higher and npm
+- Git
+
+> **Note:** Large raw dataset files (`backend/dataset/` CSVs and the `datasets/` folder) are **not committed to this repository**. Step 3 below generates the demo dataset locally. The N-BaIoT raw files must be downloaded separately (see [N-BaIoT Dataset Workflow](#n-baiot-dataset-workflow)).
+
+---
+
+### Step 1 — Clone the repository
 
 ```powershell
-Set-Location .\backend
+git clone https://github.com/PriyankaB-11/MahaDEVS_PhantomNexus.git
+cd MahaDEVS_PhantomNexus
+```
+
+---
+
+### Step 2 — Set up the Python virtual environment
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1         # Windows PowerShell
+# source .venv/bin/activate         # macOS / Linux
+```
+
+---
+
+### Step 3 — Install backend dependencies
+
+```powershell
+cd backend
 pip install -r requirements.txt
+```
+
+---
+
+### Step 4 — Generate the demo dataset
+
+This creates `backend/dataset/iot_sample.csv` with simulated normal and botnet-injected IoT traffic:
+
+```powershell
+# still inside backend/
 python scripts/generate_demo_dataset.py
+```
+
+You should see output like:
+
+```
+Wrote 3330 rows to ...\backend\dataset\iot_sample.csv
+```
+
+---
+
+### Step 5 — Start the backend
+
+```powershell
+# still inside backend/
 uvicorn app.main:app --reload
 ```
 
-Backend runs at:
+Backend API is now available at:
 
 - `http://127.0.0.1:8000`
+- API health check: `http://127.0.0.1:8000/`
 
-### 2. Start the frontend
+Keep this terminal running. Open a new terminal for the frontend.
+
+---
+
+### Step 6 — Install frontend dependencies
 
 ```powershell
-Set-Location .\frontend
+cd frontend
 npm install
+```
+
+---
+
+### Step 7 — Start the frontend dev server
+
+```powershell
+# still inside frontend/
 npm run dev
 ```
 
-Frontend usually runs at:
+Frontend is now available at:
 
 - `http://127.0.0.1:5173`
 
-### 3. Optional frontend production build
+Open this URL in your browser. The dashboard loads automatically.
+
+---
+
+### Step 8 — Explore the prototype
+
+| Page | URL | What to look at |
+|---|---|---|
+| Dashboard | `/` | Fleet health, trust trends, priority queue, network graph |
+| Devices | `/devices` | Sortable watchlist of all IoT devices |
+| Device View | `/device/camera_01` | Trust history, anomalies, digital twin, explanation |
+| Network Map | `/network` | Propagated trust decay across the device graph |
+
+Demo incidents visible by default:
+
+- `camera_01` — **critical** (botnet beaconing + suspicious ports)
+- `speaker_01` — **critical** (new external outreach)
+- `sensor_01` — **warning** (minor drift)
+
+---
+
+### Optional — Frontend production build
 
 ```powershell
-Set-Location .\frontend
+cd frontend
 npm run build
 ```
 
-## Environment Notes
+Built output is written to `frontend/dist/`.
 
-- The frontend reads `VITE_API_BASE_URL` if you want to point it to a different backend URL.
-- If `VITE_API_BASE_URL` is not set, it defaults to `http://127.0.0.1:8000`.
-- The backend reads `PHANTOM_DATA_SOURCE` with supported values: `synthetic` or `n_baiot`.
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PHANTOM_DATA_SOURCE` | `synthetic` | Backend dataset source: `synthetic` or `n_baiot` |
+| `VITE_API_BASE_URL` | `http://127.0.0.1:8000` | Frontend API base URL override |
+
+Example — switch to N-BaIoT dataset before starting the backend:
+
+```powershell
+$env:PHANTOM_DATA_SOURCE = "n_baiot"
+uvicorn app.main:app --reload
+```
 
 ## Demo Presentation Workflow
 
-Recommended live demo sequence:
+Recommended live demo sequence (after completing Steps 1–7 in Getting Started):
 
-1. Start backend and frontend.
-2. Open Dashboard to show total devices, risky devices, and average trust score.
-3. Highlight the risk distribution chart.
-4. Open Devices and point out critical rows.
-5. Open `camera_01` or `speaker_01` in Device View.
-6. Explain the digital twin deviations and recommendation.
-7. Open Network Map to show propagated trust decay.
-8. Toggle light/dark mode to demonstrate polished UI behavior.
+1. Open `http://127.0.0.1:5173` in your browser.
+2. Dashboard: show total devices, risky device count, and average trust score.
+3. Highlight the risk distribution chart and trust trend lines.
+4. Open **Devices** and point out critical rows (`camera_01`, `speaker_01`).
+5. Click `camera_01` in Device View — show digital twin deviations and the recommended action.
+6. Open **Network Map** to show propagated trust decay across neighbors.
+7. Toggle the light/dark theme button in the navbar to demonstrate UI polish.
 
 ## Dependencies
 
