@@ -5,19 +5,98 @@
 @tailwind utilities;
 
 :root {
-  color: #f7fbff;
-  background: #07131f;
+  color: #0f172a;
+  background: #f4f8fc;
   font-family: 'Space Grotesk', sans-serif;
+  --app-bg: #f4f8fc;
+  --bg-gradient-1: rgba(56, 189, 248, 0.16);
+  --bg-gradient-2: rgba(16, 185, 129, 0.14);
+  --grid-color: rgba(148, 163, 184, 0.12);
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.96) 100%);
+  --panel-border: rgba(148, 163, 184, 0.18);
+  --panel-shadow: 0 18px 40px rgba(148, 163, 184, 0.18);
+  --panel-soft-bg: rgba(255, 255, 255, 0.74);
+  --panel-soft-border: rgba(148, 163, 184, 0.16);
+  --surface-subtle: rgba(148, 163, 184, 0.08);
+  --border-soft: rgba(148, 163, 184, 0.18);
+  --border-faint: rgba(148, 163, 184, 0.1);
+  --overlay-soft: rgba(15, 23, 42, 0.06);
+  --accent-primary: #0ea5a2;
+  --accent-strong: #0891b2;
+  --nav-bg: rgba(255, 255, 255, 0.82);
+  --nav-border: rgba(148, 163, 184, 0.22);
+  --nav-link: #64748b;
+  --nav-link-hover: #0f172a;
+  --nav-active-bg: #0f172a;
+  --nav-active-text: #ffffff;
+  --theme-toggle-bg: rgba(255, 255, 255, 0.86);
+  --theme-toggle-text: #0f172a;
+  --theme-toggle-border: rgba(148, 163, 184, 0.22);
+  --chart-grid: rgba(148, 163, 184, 0.18);
+  --chart-axis: #64748b;
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.96);
+  --chart-tooltip-border: rgba(148, 163, 184, 0.22);
+  --graph-node-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 249, 252, 0.98) 100%);
+  --graph-node-shadow: 0 18px 36px rgba(30, 41, 59, 0.12);
+  --graph-canvas-bg: radial-gradient(circle at top, rgba(56, 189, 248, 0.14), transparent 32%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --graph-minimap-bg: rgba(255, 255, 255, 0.98);
+  --graph-minimap-border: rgba(203, 213, 225, 0.9);
+  --graph-mask: rgba(148, 163, 184, 0.22);
+  --graph-edge: rgba(71, 85, 105, 0.45);
+  --danger-text: #b91c1c;
+}
+
+:root[data-theme='dark'] {
+  color: #f8fafc;
+  background: #07131f;
+  --app-bg: #07131f;
+  --bg-gradient-1: rgba(75, 226, 197, 0.24);
+  --bg-gradient-2: rgba(255, 138, 76, 0.2);
+  --grid-color: rgba(75, 226, 197, 0.08);
+  --text-primary: #f8fafc;
+  --text-muted: #93b9d8;
+  --panel-bg: linear-gradient(180deg, rgba(15, 35, 50, 0.92) 0%, rgba(7, 19, 31, 0.96) 100%);
+  --panel-border: rgba(147, 185, 216, 0.12);
+  --panel-shadow: 0 18px 40px rgba(3, 13, 22, 0.28);
+  --panel-soft-bg: rgba(8, 23, 37, 0.72);
+  --panel-soft-border: rgba(147, 185, 216, 0.12);
+  --surface-subtle: rgba(255, 255, 255, 0.05);
+  --border-soft: rgba(255, 255, 255, 0.1);
+  --border-faint: rgba(255, 255, 255, 0.05);
+  --overlay-soft: rgba(0, 0, 0, 0.2);
+  --accent-primary: #4be2c5;
+  --accent-strong: #7df2db;
+  --nav-bg: rgba(7, 19, 31, 0.8);
+  --nav-border: rgba(255, 255, 255, 0.1);
+  --nav-link: #93b9d8;
+  --nav-link-hover: #ffffff;
+  --nav-active-bg: #4be2c5;
+  --nav-active-text: #07131f;
+  --theme-toggle-bg: rgba(255, 255, 255, 0.05);
+  --theme-toggle-text: #f8fafc;
+  --theme-toggle-border: rgba(255, 255, 255, 0.1);
+  --chart-grid: rgba(147, 185, 216, 0.12);
+  --chart-axis: #93b9d8;
+  --chart-tooltip-bg: #0f2332;
+  --chart-tooltip-border: rgba(147, 185, 216, 0.2);
+  --graph-node-bg: linear-gradient(180deg, rgba(10, 22, 34, 0.96) 0%, rgba(6, 16, 28, 0.98) 100%);
+  --graph-node-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+  --graph-canvas-bg: radial-gradient(circle at top, rgba(75, 226, 197, 0.08), transparent 30%), linear-gradient(180deg, rgba(5, 16, 26, 0.94) 0%, rgba(7, 19, 31, 0.98) 100%);
+  --graph-minimap-bg: rgba(5, 18, 29, 0.92);
+  --graph-minimap-border: rgba(147, 185, 216, 0.12);
+  --graph-mask: rgba(2, 8, 14, 0.7);
+  --graph-edge: rgba(147, 185, 216, 0.45);
+  --danger-text: #fecaca;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(75, 226, 197, 0.16), transparent 26%),
-    radial-gradient(circle at right bottom, rgba(255, 138, 76, 0.15), transparent 24%),
-    #07131f;
+  background: var(--app-bg);
+  color: var(--text-primary);
 }
 
 #root {
@@ -25,15 +104,66 @@ body {
 }
 
 .panel {
-  border: 1px solid rgba(147, 185, 216, 0.12);
-  background: linear-gradient(180deg, rgba(15, 35, 50, 0.92) 0%, rgba(7, 19, 31, 0.96) 100%);
-  box-shadow: 0 18px 40px rgba(3, 13, 22, 0.28);
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  box-shadow: var(--panel-shadow);
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
 .panel-soft {
-  border: 1px solid rgba(147, 185, 216, 0.12);
-  background: rgba(8, 23, 37, 0.72);
+  border: 1px solid var(--panel-soft-border);
+  background: var(--panel-soft-bg);
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background: var(--app-bg);
+  color: var(--text-primary);
+}
+
+.app-glow {
+  background: radial-gradient(circle at top left, var(--bg-gradient-1), transparent 32%), radial-gradient(circle at bottom right, var(--bg-gradient-2), transparent 28%);
+}
+
+.app-grid {
+  background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+}
+
+.topbar {
+  border-bottom: 1px solid var(--nav-border);
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.nav-shell {
+  border: 1px solid var(--nav-border);
+  background: var(--nav-bg);
+}
+
+.nav-link {
+  color: var(--nav-link);
+}
+
+.nav-link:hover {
+  color: var(--nav-link-hover);
+}
+
+.nav-link-active {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
+}
+
+.theme-toggle {
+  border: 1px solid var(--theme-toggle-border);
+  background: var(--theme-toggle-bg);
+  color: var(--theme-toggle-text);
+}
+
+.theme-toggle:hover {
+  filter: brightness(0.98);
 }
 
 .metric-text {
@@ -46,4 +176,94 @@ body {
 
 .react-flow__attribution {
   display: none;
+}
+
+.react-flow__controls {
+  border: 1px solid var(--border-soft);
+  background: var(--nav-bg);
+  box-shadow: var(--panel-shadow);
+}
+
+.react-flow__controls-button {
+  background: transparent;
+  border-bottom: 1px solid var(--border-faint);
+  color: var(--text-primary);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--surface-subtle);
+}
+
+[data-theme] .text-white {
+  color: var(--text-primary);
+}
+
+[data-theme] .text-mist {
+  color: var(--text-muted);
+}
+
+[data-theme] .bg-white\/5 {
+  background-color: var(--surface-subtle);
+}
+
+[data-theme] .border-white\/10 {
+  border-color: var(--border-soft);
+}
+
+[data-theme] .border-white\/5 {
+  border-color: var(--border-faint);
+}
+
+[data-theme] .bg-black\/20 {
+  background-color: var(--overlay-soft);
+}
+
+[data-theme] .text-red-200,
+[data-theme] .text-red-100 {
+  color: var(--danger-text);
+}
+
+[data-theme='dark'] .text-slate-900,
+[data-theme='dark'] .text-slate-700,
+[data-theme='dark'] .text-slate-600,
+[data-theme='dark'] .text-slate-500 {
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .text-slate-600,
+[data-theme='dark'] .text-slate-500 {
+  color: var(--text-muted);
+}
+
+[data-theme='dark'] .bg-white,
+[data-theme='dark'] .bg-slate-50 {
+  background-color: rgba(8, 23, 37, 0.8);
+}
+
+[data-theme='dark'] .border-slate-200 {
+  border-color: var(--border-soft);
+}
+
+[data-theme='dark'] .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.12);
+}
+
+[data-theme='dark'] .border-red-200 {
+  border-color: rgba(248, 113, 113, 0.24);
+}
+
+[data-theme='dark'] .bg-sky-50 {
+  background-color: rgba(14, 165, 233, 0.12);
+}
+
+[data-theme='dark'] .border-sky-200 {
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
+[data-theme='dark'] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.12);
+}
+
+[data-theme='dark'] .border-emerald-200 {
+  border-color: rgba(52, 211, 153, 0.24);
 }

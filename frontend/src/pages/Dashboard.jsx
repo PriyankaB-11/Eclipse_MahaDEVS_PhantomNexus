@@ -98,9 +98,10 @@ export default function Dashboard() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: '#0f2332',
-                    border: '1px solid rgba(147, 185, 216, 0.2)',
+                    background: 'var(--chart-tooltip-bg)',
+                    border: '1px solid var(--chart-tooltip-border)',
                     borderRadius: '16px',
+                    color: 'var(--text-primary)',
                   }}
                 />
               </PieChart>
