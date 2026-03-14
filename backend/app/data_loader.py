@@ -9,6 +9,17 @@ DATASET_DIR = Path(__file__).resolve().parents[1] / "dataset"
 SYNTHETIC_DATASET_PATH = DATASET_DIR / "iot_sample.csv"
 NBAIOT_DATASET_PATH = DATASET_DIR / "iot_sample_n_baiot.csv"
 DATASET_PATH = SYNTHETIC_DATASET_PATH
+UPLOADS_DIR = DATASET_DIR / "uploads"
+REQUIRED_COLUMNS = [
+    "device_id",
+    "timestamp",
+    "src_ip",
+    "dest_ip",
+    "dest_port",
+    "protocol",
+    "bytes",
+    "packets",
+]
 NUMERIC_COLUMNS = ["dest_port", "bytes", "packets"]
 
 
@@ -26,6 +37,31 @@ def resolve_dataset_path(csv_path: str | Path | None = None, source: str | None 
     raise ValueError(f"Unsupported data source '{selected_source}'. Allowed values: {allowed}")
 
 
+def validate_telemetry_dataframe(telemetry: pd.DataFrame) -> pd.DataFrame:
+    missing_columns = [column for column in REQUIRED_COLUMNS if column not in telemetry.columns]
+    if missing_columns:
+        missing = ", ".join(missing_columns)
+        raise ValueError(f"Telemetry dataset is missing required columns: {missing}")
+
+    if telemetry.empty:
+        raise ValueError("Telemetry dataset is empty")
+
+    prepared = telemetry.copy()
+    prepared["timestamp"] = pd.to_datetime(prepared["timestamp"], utc=True, errors="coerce")
+    for column in NUMERIC_COLUMNS:
+        prepared[column] = pd.to_numeric(prepared[column], errors="coerce")
+
+    prepared = prepared.dropna(subset=REQUIRED_COLUMNS)
+    if prepared.empty:
+        raise ValueError("Telemetry dataset has no valid rows after validation")
+
+    prepared["dest_port"] = prepared["dest_port"].astype(int)
+    prepared["bytes"] = prepared["bytes"].astype(float)
+    prepared["packets"] = prepared["packets"].astype(float)
+
+    return prepared.sort_values(["device_id", "timestamp"]).reset_index(drop=True)
+
+
 def load_telemetry(csv_path: str | Path | None = None, source: str | None = None) -> pd.DataFrame:
     path = resolve_dataset_path(csv_path=csv_path, source=source)
     if not path.exists():
@@ -37,19 +73,7 @@ def load_telemetry(csv_path: str | Path | None = None, source: str | None = None
         raise FileNotFoundError(f"Telemetry dataset not found at {path}")
 
     telemetry = pd.read_csv(path)
-    if telemetry.empty:
-        raise ValueError("Telemetry dataset is empty")
-
-    telemetry["timestamp"] = pd.to_datetime(telemetry["timestamp"], utc=True)
-    for column in NUMERIC_COLUMNS:
-        telemetry[column] = pd.to_numeric(telemetry[column], errors="coerce").fillna(0)
-
-    telemetry = telemetry.dropna(subset=["device_id", "src_ip", "dest_ip", "protocol"])
-    telemetry["dest_port"] = telemetry["dest_port"].astype(int)
-    telemetry["bytes"] = telemetry["bytes"].astype(float)
-    telemetry["packets"] = telemetry["packets"].astype(float)
-
-    return telemetry.sort_values(["device_id", "timestamp"]).reset_index(drop=True)
+    return validate_telemetry_dataframe(telemetry)
 
 
 def build_device_ip_index(telemetry: pd.DataFrame) -> tuple[dict[str, str], dict[str, str]]:

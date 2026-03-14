@@ -13,6 +13,7 @@
     "bootstrap": "^5.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-dropzone": "^15.0.0",
     "react-router-dom": "^7.4.0",
     "recharts": "^2.15.1"
   },

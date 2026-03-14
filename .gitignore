@@ -2,12 +2,16 @@ backend/__pycache__/
 backend/app/__pycache__/
 backend/scripts/__pycache__/
 backend/dataset/*.csv
+backend/dataset/uploads/
+backend/dataset/**/*.csv
 backend/dataset/*.tmp
 datasets/
+*.zip
 frontend/node_modules/
 frontend/dist/
 *.pyc
 *.pyo
 *.pyd
 .env
+.venv/
 .DS_Store

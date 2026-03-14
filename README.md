@@ -1,245 +1,315 @@
 # Phantom Nexus
 
-Phantom Nexus is a full-stack cybersecurity prototype for detecting early-stage IoT botnet recruitment from network telemetry. It simulates benign and malicious IoT traffic, builds a behavioral twin for every device, detects drift from expected behavior, computes trust scores, propagates network risk across device relationships, and visualizes everything in an analyst-facing dashboard.
+Phantom Nexus is a full-stack cybersecurity prototype for early detection of IoT botnet recruitment from network telemetry. The system ingests CSV telemetry, builds per-device behavior baselines, detects drift and suspicious recruitment patterns, scores trust, correlates peers, gates adaptive learning, and exposes the results through a SOC-style investigation dashboard.
 
-This project is designed as a hackathon prototype, so the focus is:
+The current prototype is built for demo and exploration rather than offline model training or production deployment. It favors explainable signals, fast dataset refresh, and device-level investigation workflows.
 
-- clear architecture
-- modular backend pipeline
-- demo-ready simulation data
-- usable frontend workflow for presenting the idea live
+## What The Current Prototype Does
 
-## What The System Does
+Phantom Nexus answers these practical questions for each monitored IoT device:
 
-Phantom Nexus monitors device communication flows and answers six practical questions:
-
-1. What does normal behavior look like for each IoT device?
-2. Is the current device behavior drifting from its normal baseline?
-3. Are there signals of botnet recruitment such as beaconing, suspicious ports, or new external endpoints?
-4. How trustworthy is each device right now?
-5. If one device becomes risky, how much nearby risk should propagate to related devices?
-6. How can the analyst explain the decision in a simple, action-oriented report?
+1. What does normal behavior look like for this device?
+2. Is the device drifting away from its baseline?
+3. Are there signs of early botnet recruitment such as beaconing, unusual ports, or external outreach?
+4. How risky is the device right now, and what trust score should it receive?
+5. Are nearby devices showing coordinated suspicious behavior?
+6. Should adaptive baseline learning stay enabled or be frozen?
+7. How can an analyst export the findings into a report?
 
 ## Core Capabilities
 
-- IoT telemetry ingestion from CSV
-- Feature engineering over time windows
-- Per-device Phantom Twin baseline modeling
-- Digital twin generation for every device
+- CSV telemetry ingestion and validation
+- Drag-and-drop dataset upload from the frontend
+- Feature engineering over per-device behavior and rolling windows
+- Phantom Twin baseline modeling and digital twin views
 - Drift detection using change-point analysis
-- Botnet recruitment scoring using rule-based indicators
+- Hybrid botnet detection using both heuristics and an ML classifier
 - Trust score computation on a 0-100 scale
-- Risk propagation across an internal device graph
-- Explainability reports for SOC-style triage
-- Interactive frontend dashboard with charts, tables, device detail views, and network graph visualization
-- Light and dark theme support with runtime theme toggle
-
-## Tech Stack
-
-### Backend Stack (What It Is Used For)
-
-| Technology | Used For | Why It Was Chosen |
-|---|---|---|
-| Python | Core backend language and analytics logic | Fast prototyping and strong data ecosystem |
-| FastAPI | REST API layer (`/devices`, `/risk_graph`, `/device/{id}`, etc.) | Very fast to build typed APIs and easy frontend integration |
-| Pandas | Loading CSV telemetry and feature aggregation | Best fit for table/time-window transformations |
-| NumPy | Numerical operations for scoring and normalization | Lightweight and efficient numerical toolkit |
-| Ruptures | Change-point based drift detection | Purpose-built library for behavioral drift segmentation |
-| NetworkX | Communication graph and trust propagation modeling | Simple graph primitives and easy JSON export |
-| scikit-learn | ML-ready extension layer for future classifier experiments | Standard ML toolkit for rapid experimentation |
-| Uvicorn | ASGI server to run FastAPI | Reliable dev server with FastAPI-first support |
-
-### Frontend Stack (What It Is Used For)
-
-| Technology | Used For | Why It Was Chosen |
-|---|---|---|
-| React | UI component system and page composition | Fast iteration, modular components, strong ecosystem |
-| Vite | Frontend dev/build pipeline | Very fast startup and build feedback loop |
-| React Router | Multi-page navigation (Dashboard, Devices, Device View, Network Map) | Clean client-side routing for app-style UX |
-| Tailwind CSS | Utility-first styling and responsive layout | Rapid visual development with consistent spacing/typography |
-| Bootstrap (selective) | Small UI utility usage (buttons and quick polish) | Speeds up prototype delivery for common controls |
-| Recharts | Trust trend and risk distribution charts | Easy React-native charting with good defaults |
-| React Flow (`@xyflow/react`) | Interactive risk propagation graph + minimap | Built specifically for interactive node/edge network views |
-
-### Tooling
-
-| Tool | Used For |
-|---|---|
-| PostCSS + Autoprefixer | Tailwind processing and CSS compatibility |
-| npm | Frontend dependency and script management |
-| pip | Backend dependency management |
+- Peer correlation detection for coordinated suspicious activity
+- Gated learning controls to freeze or roll back baseline updates
+- Graph-based risk visualization across connected devices
+- Device investigation views with LLM-assisted summaries
+- Downloadable PDF investigation reports
 
 ## High-Level Architecture
 
 ```mermaid
 flowchart LR
-    A[IoT Traffic Simulator\nbackend/scripts/generate_demo_dataset.py]
-    B[Telemetry Dataset\nbackend/dataset/iot_sample.csv]
-    C[Backend Analytics Pipeline\nload -> features -> twin -> drift -> detect -> trust -> graph -> explain]
-    D[FastAPI Service\n/devices /trust_scores /drift /risk_graph /digital_twins /device/id]
-    E[React Frontend\nDashboard + Devices + Device View + Network Map]
-    F[Analyst Insights\nTrust, anomalies, propagation, recommendations]
+    A[CSV Telemetry\nSynthetic, Uploaded, or N-BaIoT-derived]
+    B[Backend Snapshot Pipeline\nload -> windows -> baselines -> drift -> detect -> ML -> peer correlation -> gated learning -> trust -> graph]
+    C[FastAPI Service\n/devices /device/:id /dataset_info /upload_dataset]
+    D[React Frontend\nLanding + Dashboard + Devices + Investigation + Network]
+    E[Analyst Outputs\nTrust, anomalies, correlations, PDF report]
 
-    A --> B --> C --> D --> E --> F
+    A --> B --> C --> D --> E
 ```
 
 ## Backend Workflow
 
-When the backend snapshot is rebuilt, the pipeline works in this order:
+Whenever the active dataset changes, the backend rebuilds a fresh snapshot.
 
-1. Load telemetry rows from CSV.
-2. Convert timestamps and normalize numeric fields.
-3. Aggregate traffic into per-device time windows.
-4. Compute device behavioral features.
-5. Build Phantom Twin baselines for each device.
-6. Detect behavioral drift using change points.
-7. Score recruitment indicators using rule-based botnet detection.
-8. Calculate trust scores and trust history.
-9. Build a communication graph and propagate trust decay.
-10. Produce explainability and digital twin output for the frontend.
+1. Load telemetry rows from the active CSV.
+2. Validate required columns and normalize timestamp and numeric fields.
+3. Aggregate flows into per-device time windows.
+4. Build device behavioral baselines and digital twin context.
+5. Detect behavioral drift using change-point analysis.
+6. Run heuristic botnet detection over recent behavior.
+7. Engineer device-level ML features and train a per-snapshot RandomForest classifier.
+8. Merge heuristic and ML detections into a single device verdict.
+9. Compute trust scores and trust histories.
+10. Detect peer correlations and evaluate gated learning decisions.
+11. Build the internal risk graph.
+12. Generate explainability payloads, investigation data, and report content for the frontend.
 
-## Backend Module Responsibilities
+## Current Backend Modules
 
 ### `backend/app/data_loader.py`
 
-- Loads the CSV dataset.
-- Parses timestamps.
-- Normalizes numeric telemetry fields.
-- Maps device IDs to internal IPs.
+- Resolves the active dataset source.
+- Validates telemetry schema.
+- Normalizes timestamps and numeric columns.
+- Supports synthetic, N-BaIoT-derived, and uploaded datasets.
 
 ### `backend/app/feature_engineering.py`
 
-- Converts raw flow rows into time-windowed features per device.
-- Computes:
-  - flow frequency
-  - unique destination count
-  - average bytes per flow
-  - average packets per flow
-  - unique port count
-  - DNS query count
-  - external connection ratio
-  - off-hours activity ratio
-  - dominant activity hour
-  - destination list
-  - port list
-  - internal target list
+- Converts raw telemetry into time-windowed device features.
+- Produces the rolling signals used for baselines, drift, and trust.
 
 ### `backend/app/phantom_twin.py`
 
-- Builds behavioral baselines for each device.
-- Creates digital twins that compare current behavior to the baseline.
-- Digital twin output includes:
-  - behavioral state
-  - confidence
-  - baseline profile
-  - observed profile
-  - deviations
-  - threat overlay
+- Builds per-device behavioral baselines.
+- Produces digital twin views that compare observed behavior to expected behavior.
 
 ### `backend/app/drift_detection.py`
 
-- Detects change points across time-windowed device signals.
-- Uses Ruptures to compute drift score and signal-level breakdown.
+- Uses Ruptures to identify change points and drift severity.
 
 ### `backend/app/botnet_detector.py`
 
-- Detects likely recruitment indicators such as:
+- Detects suspicious recruitment indicators such as:
   - new external IPs
   - suspicious ports
   - periodic beaconing
   - DNS anomalies
   - external outreach spikes
 
+### `backend/app/ml_model.py`
+
+- Engineers device-level behavioral features such as connection frequency, port entropy, beacon timing variance, and external IP diversity.
+- Trains a snapshot-local `RandomForestClassifier`.
+- Produces botnet probability and anomaly summary per device.
+
+### `backend/app/peer_correlation.py`
+
+- Finds coordinated suspicious behavior across devices.
+- Produces correlation scores and correlated peer lists.
+
+### `backend/app/gated_learning.py`
+
+- Decides whether baseline learning should remain adaptive or be frozen.
+- Uses trust score, active anomalies, peer correlation, and shadow-model divergence as gating signals.
+
 ### `backend/app/trust_engine.py`
 
-- Computes trust score history per device.
-- Produces final current trust score, status, and risk level.
+- Computes trust score history, device status, and risk level.
 
 ### `backend/app/risk_graph.py`
 
-- Builds a NetworkX directed graph from internal communication flows.
-- Applies trust decay to neighbors of critical nodes.
-- Returns graph-friendly node/edge JSON.
+- Builds a NetworkX graph of device relationships.
+- Propagates local risk pressure across neighboring devices.
 
 ### `backend/app/explainability.py`
 
-- Produces structured analyst-facing decision output.
-- Converts signals into recommended action text.
+- Produces structured analyst-facing explanations.
+
+### `backend/app/llm_explainer.py`
+
+- Generates SOC-style security summaries using Groq when available.
+- Falls back to a local heuristic summary if the LLM call fails.
+
+### `backend/app/pdf_report_generator.py`
+
+- Creates a PDF investigation report for a device using ReportLab.
 
 ### `backend/app/main.py`
 
-- Orchestrates the full snapshot build.
-- Exposes REST endpoints.
-- Enables CORS for frontend access.
+- Orchestrates the full snapshot rebuild.
+- Exposes the REST API.
+- Handles CSV uploads and device report downloads.
 
 ## Frontend Workflow
 
-The frontend consumes API endpoints and converts them into analyst-facing views:
+The frontend presents the backend snapshot through four main views plus a landing page.
 
-1. Dashboard shows top-line health metrics, trust trajectory, pie distribution, priority queue, and network graph.
-2. Devices page provides a sortable incident-style watchlist view.
-3. Device View shows trust history, anomalies, explanation, and digital twin state.
-4. Network Map shows propagation behavior across internal device relationships.
-5. Navbar theme toggle switches between light and dark themes globally.
+1. Landing page introduces the product and links into the command views.
+2. Dashboard shows fleet posture, trust trajectory, risk distribution, and the network graph.
+3. Devices page shows the active dataset, supports CSV upload, and lists the fleet.
+4. Device Investigation page shows trust gauge, anomaly breakdown, peer correlations, gated learning state, LLM narrative, and PDF export.
+5. Network Map shows the graph-oriented view of device relationships and propagation context.
 
-## Frontend Module Responsibilities
+The current UI ships as a dark command-center style interface. The earlier light/dark theme toggle is no longer part of the present prototype.
+
+## Current Frontend Modules
 
 ### `frontend/src/App.jsx`
 
-- Main router shell.
-- Persists global light/dark theme state.
+- Defines the routes:
+  - `/`
+  - `/dashboard`
+  - `/devices`
+  - `/devices/:deviceId`
+  - `/network`
 
 ### `frontend/src/components/Navbar.jsx`
 
-- Top-level navigation.
-- Theme toggle control.
+- Top navigation for the landing, dashboard, devices, and network views.
+
+### `frontend/src/components/FileUpload.jsx`
+
+- Drag-and-drop CSV upload with progress tracking.
+- Calls the backend upload API and refreshes the dataset snapshot.
 
 ### `frontend/src/components/DeviceTable.jsx`
 
-- Fleet watchlist table for device trust and status.
+- Fleet watchlist table for device trust and anomaly posture.
 
 ### `frontend/src/components/TrustScoreChart.jsx`
 
-- Recharts-based trust timeline visualization.
+- Recharts-based trust history visualization.
 
 ### `frontend/src/components/NetworkGraph.jsx`
 
-- React Flow-powered propagation visualization.
-- Supports minimap, drag/pan/zoom interactivity, and theme-aware rendering.
+- React Flow graph for network and propagation context.
 
-### `frontend/src/components/DeviceDetail.jsx`
+### `frontend/src/pages/Landing.jsx`
 
-- Renders device investigation content:
-  - trust overview
-  - anomalies
-  - recommended action
-  - evidence ledger
-  - digital twin summary
+- Product entry page and feature overview.
 
 ### `frontend/src/pages/Dashboard.jsx`
 
-- Overall fleet summary page.
+- Fleet overview, aggregate trust trend, risk distribution, priority queue, and graph preview.
 
 ### `frontend/src/pages/Devices.jsx`
 
-- Fleet watchlist page.
+- Device fleet view plus active dataset metadata and upload controls.
 
-### `frontend/src/pages/DeviceView.jsx`
+### `frontend/src/pages/DeviceInvestigation.jsx`
 
-- Per-device investigation page.
+- Deep investigation page for one device.
+- Includes anomaly chart, peer correlations, learning state, LLM explanation, and PDF report download.
 
 ### `frontend/src/pages/NetworkMap.jsx`
 
-- Dedicated risk propagation view.
+- Dedicated graph-centric visualization page.
 
 ### `frontend/src/services/api.js`
 
-- Centralized frontend API layer.
+- Central frontend API wrapper.
+
+## REST API
+
+The backend currently exposes these endpoints:
+
+- `GET /`
+- `GET /devices`
+- `GET /trust_scores`
+- `GET /drift`
+- `GET /risk_graph`
+- `GET /digital_twins`
+- `GET /peer_correlations`
+- `GET /dataset_info`
+- `GET /device/{device_id}`
+- `POST /upload_dataset`
+- `GET /device_investigation/{device_id}`
+- `GET /device_report/{device_id}`
+
+## Data Model
+
+### Required Input Columns
+
+- `device_id`
+- `timestamp`
+- `src_ip`
+- `dest_ip`
+- `dest_port`
+- `protocol`
+- `bytes`
+- `packets`
+
+### ML Feature Set
+
+The current ML model uses 10 engineered device-level features:
+
+- `connection_frequency`
+- `unique_dest_ips`
+- `avg_bytes`
+- `avg_packets`
+- `port_entropy`
+- `time_of_day_activity`
+- `beacon_interval_std`
+- `external_ip_diversity`
+- `suspicious_port_ratio`
+- `off_hours_activity`
+
+### Primary Device Outputs
+
+- trust score
+- risk level
+- drift score
+- botnet probability
+- anomaly score
+- anomaly list
+- peer correlation score
+- gated learning state
+- LLM explanation
+- PDF investigation report
+
+## Detection and ML Design
+
+Phantom Nexus currently uses a hybrid detection design:
+
+- Heuristics identify explicit suspicious patterns such as beaconing, suspicious ports, and new external destinations.
+- A `RandomForestClassifier` adds a behavior-based probability score using engineered device-level features.
+- The final device verdict merges the heuristic and ML outputs.
+
+The model is trained per snapshot rather than as a long-lived pre-trained artifact. This keeps the prototype responsive to uploaded datasets and demo refreshes.
+
+## Dataset Support
+
+No dataset CSV files are committed to this repository. You must either generate the synthetic demo dataset locally or download and preprocess the N-BaIoT dataset before running the backend.
+
+### 1. Synthetic Demo Dataset
+
+Default source: `backend/dataset/iot_sample.csv`
+
+Generated by:
+
+- `backend/scripts/generate_demo_dataset.py`
+
+This dataset is designed to surface demo-worthy incidents in the latest windows.
+
+### 2. Uploaded CSV Datasets
+
+- Uploaded through the Devices page.
+- Stored under `backend/dataset/uploads/`.
+- Automatically validated and used as the new active dataset.
+
+### 3. N-BaIoT-Derived Dataset
+
+Optional source: `backend/dataset/iot_sample_n_baiot.csv`
+
+Generated from the raw N-BaIoT data using:
+
+- `backend/scripts/preprocess_n_baiot.py`
+
+The preprocessing script maps the source data into the backend telemetry schema and injects late suspicious windows so the prototype remains visually useful during demos.
+
+The raw dataset is not stored in this repository. Download it yourself before preprocessing.
 
 ## Project Structure
 
 ```text
-phantom-nexus/
+MahaDEVS_Phantom-Nexus/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
@@ -248,15 +318,25 @@ phantom-nexus/
 │   │   ├── drift_detection.py
 │   │   ├── explainability.py
 │   │   ├── feature_engineering.py
+│   │   ├── gated_learning.py
+│   │   ├── llm_explainer.py
 │   │   ├── main.py
+│   │   ├── ml_model.py
+│   │   ├── pdf_report_generator.py
+│   │   ├── peer_correlation.py
 │   │   ├── phantom_twin.py
 │   │   ├── risk_graph.py
 │   │   └── trust_engine.py
 │   ├── dataset/
-│   │   └── iot_sample.csv
+│   │   ├── iot_sample.csv
+│   │   ├── iot_sample_n_baiot.csv
+│   │   └── uploads/
 │   ├── scripts/
-│   │   └── generate_demo_dataset.py
+│   │   ├── generate_demo_dataset.py
+│   │   └── preprocess_n_baiot.py
 │   └── requirements.txt
+├── datasets/
+│   └── n-baiot/
 ├── frontend/
 │   ├── public/
 │   ├── src/
@@ -271,186 +351,98 @@ phantom-nexus/
 │   ├── postcss.config.js
 │   ├── tailwind.config.js
 │   └── vite.config.js
-├── .gitignore
+├── start.ps1
+├── test_groq.py
 └── README.md
 ```
 
-## Data Model
+## Tech Stack
 
-### Input Telemetry Columns
+### Backend
 
-- `device_id`
-- `timestamp`
-- `src_ip`
-- `dest_ip`
-- `dest_port`
-- `protocol`
-- `bytes`
-- `packets`
+| Technology | Used For |
+|---|---|
+| Python | Backend logic and analytics pipeline |
+| FastAPI | REST API layer |
+| Pandas | CSV loading and feature aggregation |
+| NumPy | Numerical scoring helpers |
+| scikit-learn | RandomForest-based device classifier |
+| Ruptures | Drift detection |
+| NetworkX | Device relationship graph |
+| ReportLab | PDF report generation |
+| Groq | Optional LLM-generated investigation summaries |
+| Uvicorn | ASGI development server |
 
-### Derived Features
+### Frontend
 
-- flow frequency per device/time window
-- unique destination count
-- unique ports count
-- average bytes per flow
-- average packets per flow
-- DNS query count
-- external connection ratio
-- off-hours ratio
-- port distribution
+| Technology | Used For |
+|---|---|
+| React | UI composition |
+| Vite | Development and build pipeline |
+| React Router | App routing |
+| Tailwind CSS | Styling and layout |
+| Bootstrap | Selective UI utility styling |
+| Recharts | Charts |
+| React Flow (`@xyflow/react`) | Network visualization |
+| `react-dropzone` | Drag-and-drop dataset upload |
 
-### Device Risk Outputs
+## Getting Started
 
-- trust score
-- risk level
-- drift score
-- botnet probability
-- anomaly list
-- explanation report
-- digital twin state
-- propagated trust on graph neighbors
+### Prerequisites
 
-## Digital Twin Implementation
+- Python 3.10 or higher
+- Node.js 18 or higher
+- npm
 
-Each device gets a digital twin derived from its baseline and latest observed behavior.
-
-The digital twin contains:
-
-- `behavioral_state`
-  - `stable`, `degraded`, or `compromised`
-- `confidence`
-  - confidence in the twin state derived from drift level
-- `baseline_profile`
-  - learned normal behavior for that device
-- `observed_profile`
-  - current observed behavior from the latest window
-- `deviations`
-  - how far current behavior is from expected behavior
-- `threat_overlay`
-  - trust, drift, botnet probability, and anomalies
-
-This is implemented in `backend/app/phantom_twin.py` and returned via `GET /digital_twins` and `GET /device/{device_id}`.
-
-## Trust Scoring Logic
-
-Trust starts from an assumed healthy baseline and is reduced by observed risk signals.
-
-Primary trust deductions come from:
-
-- deviation from historical flow frequency
-- new or unexpected destinations
-- new or unexpected ports
-- off-hours behavior
-- elevated DNS anomalies
-- external outreach spikes
-- drift score
-- botnet probability
-
-Final trust is clamped between 0 and 100.
-
-Risk interpretation:
-
-- `safe`: 70-100
-- `warning`: 40-69
-- `critical`: 0-39
-
-## Risk Propagation Logic
-
-The graph represents internal device-to-device communication relationships.
-
-- Nodes are devices.
-- Edges are internal communication flows.
-- Critical devices propagate a trust decay penalty to direct neighbors.
-- The frontend shows both original trust and propagated trust.
-
-This is intended to model local blast radius rather than global infection certainty.
-
-## Explainability Workflow
-
-Each device detail page includes a structured explanation with:
-
-- trust score
-- anomaly reasons
-- evidence values
-- recommended action
-
-Example recommendation outcomes:
-
-- continue baseline monitoring
-- increase monitoring and validate recent connections
-- segment device and inspect outbound destinations
-- quarantine device
-
-## REST API
-
-### `GET /`
-
-Returns a health-style message indicating the backend is running.
-
-### `GET /devices`
-
-Returns summarized fleet device records for watchlist and dashboard views.
-
-### `GET /trust_scores`
-
-Returns trust history per device for charting.
-
-### `GET /drift`
-
-Returns drift scores and signal breakdowns.
-
-### `GET /risk_graph`
-
-Returns graph nodes and edges for the propagation visualization.
-
-### `GET /digital_twins`
-
-Returns digital twin payloads for all devices.
-
-### `GET /device/{device_id}`
-
-Returns the full detail payload for one device, including:
-
-- summary
-- trust history
-- drift
-- detection
-- explanation
-- phantom twin baseline
-- digital twin
-
-## Demo Dataset and Simulation
-
-The demo dataset is generated by:
-
-- `backend/scripts/generate_demo_dataset.py`
-
-It creates:
-
-- normal traffic for multiple IoT device types
-- late-stage injected malicious behavior so the dashboard has active incidents in the latest windows
-- internal propagation-like flows between compromised and neighboring devices
-
-The default simulation currently highlights:
-
-- `camera_01` as critical
-- `speaker_01` as critical
-- `sensor_01` as warning
-
-## N-BaIoT Dataset Workflow
-
-You can optionally run the backend against real N-BaIoT network traffic instead of synthetic data.
-
-> **Download the dataset first** from the [UCI ML Repository — N-BaIoT](https://archive.ics.uci.edu/dataset/442/detection+of+iot+botnet+attacks+n+baiot) and save it as `datasets/n-baiot.zip` in the project root. The raw dataset is several GB and is **not included in this repository**.
-
-### 1. Extract N-BaIoT archive
+### 1. Clone the repository
 
 ```powershell
-python -c "import zipfile, pathlib; z=zipfile.ZipFile('datasets/n-baiot.zip'); out=pathlib.Path('datasets/n-baiot'); out.mkdir(parents=True, exist_ok=True); z.extractall(out)"
+git clone https://github.com/PriyankaB-11/Eclipse_MahaDEVS_PhantomNexus.git
+cd Eclipse_MahaDEVS_PhantomNexus
 ```
 
-### 2. Preprocess N-BaIoT into backend telemetry format
+### 2. Create and activate a virtual environment
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Install backend dependencies
+
+```powershell
+cd backend
+pip install -r requirements.txt
+cd ..
+```
+
+### 4. Install frontend dependencies
+
+```powershell
+cd frontend
+npm install
+cd ..
+```
+
+### 5. Choose and prepare a dataset
+
+The project does not ship with dataset CSVs. Pick one of these setup paths before starting the backend.
+
+#### Option A: Generate the synthetic demo dataset locally
+
+```powershell
+cd backend
+python scripts/generate_demo_dataset.py
+cd ..
+```
+
+This creates `backend/dataset/iot_sample.csv` and is the fastest way to run the prototype.
+
+#### Option B: Download and preprocess the N-BaIoT dataset
+
+1. Download the raw N-BaIoT dataset from the UCI repository.
+2. Extract the files into `datasets/n-baiot/`.
+3. Run the preprocessor:
 
 ```powershell
 python backend/scripts/preprocess_n_baiot.py
@@ -458,227 +450,101 @@ python backend/scripts/preprocess_n_baiot.py
 
 This creates `backend/dataset/iot_sample_n_baiot.csv`.
 
-The preprocessing script maps N-BaIoT statistical features into the backend schema:
+### 6. Start the application
 
-- `device_id`, `timestamp`, `src_ip`, `dest_ip`, `dest_port`, `protocol`, `bytes`, `packets`
+You can either launch both services with the helper script or run them separately.
 
-It also injects attack-like windows at the end of selected device timelines so trust degradation remains visible for demos.
-
-### 3. Switch backend source
+#### Option A: Use the helper script
 
 ```powershell
+.\start.ps1
+```
+
+This opens:
+
+- Backend: `http://127.0.0.1:8000`
+- Frontend: `http://localhost:5173`
+
+#### Option B: Run services manually
+
+Backend:
+
+```powershell
+cd backend
+$env:PHANTOM_DATA_SOURCE = "synthetic"
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+If you prepared the N-BaIoT dataset instead, switch the source before starting the backend:
+
+```powershell
+cd backend
 $env:PHANTOM_DATA_SOURCE = "n_baiot"
-cd backend
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- Python 3.10 or higher
-- Node.js 18 or higher and npm
-- Git
-
-> **Note:** Large raw dataset files (`backend/dataset/` CSVs and the `datasets/` folder) are **not committed to this repository**. Step 3 below generates the demo dataset locally. The N-BaIoT raw files must be downloaded separately (see [N-BaIoT Dataset Workflow](#n-baiot-dataset-workflow)).
-
----
-
-### Step 1 — Clone the repository
-
-```powershell
-git clone https://github.com/PriyankaB-11/MahaDEVS_PhantomNexus.git
-cd MahaDEVS_PhantomNexus
-```
-
----
-
-### Step 2 — Set up the Python virtual environment
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1         # Windows PowerShell
-# source .venv/bin/activate         # macOS / Linux
-```
-
----
-
-### Step 3 — Install backend dependencies
-
-```powershell
-cd backend
-pip install -r requirements.txt
-```
-
----
-
-### Step 4 — Generate the demo dataset
-
-This creates `backend/dataset/iot_sample.csv` with simulated normal and botnet-injected IoT traffic:
-
-```powershell
-# still inside backend/
-python scripts/generate_demo_dataset.py
-```
-
-You should see output like:
-
-```
-Wrote 3330 rows to ...\backend\dataset\iot_sample.csv
-```
-
----
-
-### Step 5 — Start the backend
-
-```powershell
-# still inside backend/
-uvicorn app.main:app --reload
-```
-
-Backend API is now available at:
-
-- `http://127.0.0.1:8000`
-- API health check: `http://127.0.0.1:8000/`
-
-Keep this terminal running. Open a new terminal for the frontend.
-
----
-
-### Step 6 — Install frontend dependencies
+Frontend:
 
 ```powershell
 cd frontend
-npm install
-```
-
----
-
-### Step 7 — Start the frontend dev server
-
-```powershell
-# still inside frontend/
 npm run dev
 ```
 
-Frontend is now available at:
+## Frontend Pages
 
-- `http://127.0.0.1:5173`
-
-Open this URL in your browser. The dashboard loads automatically.
-
----
-
-### Step 8 — Explore the prototype
-
-| Page | URL | What to look at |
+| Page | Route | Purpose |
 |---|---|---|
-| Dashboard | `/` | Fleet health, trust trends, priority queue, network graph |
-| Devices | `/devices` | Sortable watchlist of all IoT devices |
-| Device View | `/device/camera_01` | Trust history, anomalies, digital twin, explanation |
-| Network Map | `/network` | Propagated trust decay across the device graph |
-
-Demo incidents visible by default:
-
-- `camera_01` — **critical** (botnet beaconing + suspicious ports)
-- `speaker_01` — **critical** (new external outreach)
-- `sensor_01` — **warning** (minor drift)
-
----
-
-### Optional — Frontend production build
-
-```powershell
-cd frontend
-npm run build
-```
-
-Built output is written to `frontend/dist/`.
-
----
+| Landing | `/` | Product entry point and overview |
+| Dashboard | `/dashboard` | Fleet metrics, trust trend, risk distribution, graph preview |
+| Devices | `/devices` | Device list, active dataset metadata, CSV upload |
+| Device Investigation | `/devices/:deviceId` | Deep dive into one device |
+| Network Map | `/network` | Graph-oriented relationship view |
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `PHANTOM_DATA_SOURCE` | `synthetic` | Backend dataset source: `synthetic` or `n_baiot` |
-| `VITE_API_BASE_URL` | `http://127.0.0.1:8000` | Frontend API base URL override |
+| `PHANTOM_DATA_SOURCE` | `synthetic` | Dataset source: `synthetic` or `n_baiot` |
+| `VITE_API_BASE_URL` | `http://127.0.0.1:8000` | Frontend API base URL |
+| `GROQ_API_KEY` | unset in recommended setup | Optional Groq key for LLM summaries |
 
-Example — switch to N-BaIoT dataset before starting the backend:
+If `GROQ_API_KEY` is not set, the backend falls back to a local heuristic summary generator.
+
+Example:
 
 ```powershell
 $env:PHANTOM_DATA_SOURCE = "n_baiot"
+cd backend
 uvicorn app.main:app --reload
 ```
 
-## Demo Presentation Workflow
+## N-BaIoT Workflow
 
-Recommended live demo sequence (after completing Steps 1–7 in Getting Started):
+If you want to run the prototype on the N-BaIoT dataset:
 
-1. Open `http://127.0.0.1:5173` in your browser.
-2. Dashboard: show total devices, risky device count, and average trust score.
-3. Highlight the risk distribution chart and trust trend lines.
-4. Open **Devices** and point out critical rows (`camera_01`, `speaker_01`).
-5. Click `camera_01` in Device View — show digital twin deviations and the recommended action.
-6. Open **Network Map** to show propagated trust decay across neighbors.
-7. Toggle the light/dark theme button in the navbar to demonstrate UI polish.
+1. Download the raw dataset from the UCI repository.
+2. Extract it into `datasets/n-baiot/`.
+3. Run the preprocessor.
+4. Start the backend with `PHANTOM_DATA_SOURCE=n_baiot`.
 
-## Dependencies
+The downloaded raw dataset stays local and should not be committed.
 
-### Backend dependencies
+Preprocessing command:
 
-```text
-fastapi>=0.129.0,<0.130.0
-uvicorn>=0.41.0,<0.42.0
-pandas>=2.3.3,<2.4.0
-numpy>=2.4.0,<2.5.0
-scikit-learn>=1.8.0,<1.9.0
-ruptures>=1.1.10,<1.2.0
-networkx>=3.6.1,<3.7.0
-python-multipart>=0.0.22,<0.1.0
+```powershell
+python backend/scripts/preprocess_n_baiot.py
 ```
 
-### Frontend dependencies
+This generates `backend/dataset/iot_sample_n_baiot.csv`.
 
-```text
-react
-react-dom
-react-router-dom
-@xyflow/react
-recharts
-bootstrap
-vite
-tailwindcss
-postcss
-autoprefixer
-```
+## Current Limitations
 
-## Build Status
-
-Validated locally:
-
-- backend snapshot pipeline builds successfully
-- frontend production build completes successfully
-- REST endpoints return expected data
-- graph interactivity and minimap behavior are wired into persistent React Flow state
-- global light/dark theme toggle is implemented in the frontend shell
-
-## Known Limitations
-
-- The dataset is simulated, not production telemetry.
-- Detection logic is intentionally interpretable and lightweight, not production-grade ML.
-- Risk propagation is local-neighbor based and does not yet model multi-hop infection probabilities.
-- Frontend build reports a bundle size warning, but the app builds and runs correctly.
-
-## Future Improvements
-
-- Add live streaming updates instead of static snapshot refresh.
-- Add filtering, sorting, and export controls in the watchlist.
-- Add auto-layout for the network graph.
-- Add authentication and user roles.
-- Add model training and evaluation workflow for more advanced botnet classification.
-- Add websocket-based real-time dashboard updates.
+- The primary workflow is snapshot-based, not streaming.
+- The ML model is intentionally lightweight and retrained per snapshot.
+- Uploaded datasets must match the required telemetry schema.
+- The prototype is optimized for explainability and demo flow rather than production-scale model management.
+- Groq summaries are best treated as optional enrichment; the backend can fall back to heuristic narrative generation.
 
 ## Summary
 
-Phantom Nexus combines telemetry analysis, behavioral baselining, digital twins, drift detection, trust scoring, propagation modeling, and analyst-facing visualization into a single end-to-end prototype. It is structured to be understandable in a hackathon setting while still feeling like a realistic security analytics workflow.
+Phantom Nexus currently combines telemetry ingestion, behavioral baselining, drift detection, hybrid botnet scoring, trust analytics, peer correlation, gated learning, graph context, device investigation, LLM-assisted explanation, and PDF export into a single demo-ready security prototype.
