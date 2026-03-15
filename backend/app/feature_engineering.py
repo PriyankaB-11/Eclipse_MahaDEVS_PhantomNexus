@@ -7,6 +7,21 @@ import pandas as pd
 from .data_loader import build_device_ip_index
 
 
+def _resolve_window_size(telemetry: pd.DataFrame, default_window_size: str) -> str:
+    min_timestamp = telemetry["timestamp"].min()
+    max_timestamp = telemetry["timestamp"].max()
+    if pd.isna(min_timestamp) or pd.isna(max_timestamp):
+        return default_window_size
+
+    span_minutes = (max_timestamp - min_timestamp).total_seconds() / 60.0
+    # For short uploads, use smaller windows so drift and baseline logic still have enough timeline points.
+    if span_minutes <= 120:
+        return "10min"
+    if span_minutes <= 480:
+        return "20min"
+    return default_window_size
+
+
 def _mode_hour(hours: pd.Series) -> int:
     if hours.empty:
         return 0
@@ -24,9 +39,10 @@ def _top_distribution(values: pd.Series, limit: int = 5) -> dict[str, float]:
 
 
 def engineer_device_windows(telemetry: pd.DataFrame, window_size: str = "1h") -> pd.DataFrame:
+    effective_window_size = _resolve_window_size(telemetry, window_size)
     internal_ips = set(telemetry["src_ip"].unique())
     windowed = telemetry.copy()
-    windowed["window_start"] = windowed["timestamp"].dt.floor(window_size)
+    windowed["window_start"] = windowed["timestamp"].dt.floor(effective_window_size)
     windowed["activity_hour"] = windowed["timestamp"].dt.hour
     windowed["is_external"] = ~windowed["dest_ip"].isin(internal_ips)
     windowed["is_off_hours"] = windowed["activity_hour"].isin([0, 1, 2, 3, 4, 5, 22, 23])

@@ -1,7 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Link, useParams } from 'react-router-dom';
 import { getDevice, getDeviceInvestigation, getDeviceReportUrl } from '../services/api';
+
+
+function toPercent(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return 0;
+  }
+  // Backend scores are mostly 0..1. If already percent-like, keep them as-is.
+  const scaled = numeric <= 1 ? numeric * 100 : numeric;
+  return Math.max(0, Math.min(100, Number(scaled.toFixed(2))));
+}
 
 function Gauge({ value }) {
   const degrees = Math.max(0, Math.min(100, value)) * 3.6;
@@ -31,10 +42,13 @@ export default function DeviceInvestigation() {
   const [detail, setDetail] = useState(null);
   const [investigation, setInvestigation] = useState(null);
   const [error, setError] = useState('');
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
+        setError('');
+        setNotFound(false);
         const [deviceDetail, deviceInvestigation] = await Promise.all([
           getDevice(deviceId),
           getDeviceInvestigation(deviceId),
@@ -42,7 +56,14 @@ export default function DeviceInvestigation() {
         setDetail(deviceDetail);
         setInvestigation(deviceInvestigation);
       } catch (loadError) {
-        setError(loadError.message);
+        const message = loadError.message || 'Failed to load device investigation';
+        if (message.toLowerCase().includes('device not found')) {
+          setNotFound(true);
+          setDetail(null);
+          setInvestigation(null);
+          return;
+        }
+        setError(message);
       }
     }
 
@@ -51,15 +72,43 @@ export default function DeviceInvestigation() {
 
   const anomalyData = investigation
     ? [
-        { name: 'Drift', value: investigation.anomaly_scores.drift_score * 100, color: '#f59e0b' },
-        { name: 'Anomaly', value: investigation.anomaly_scores.anomaly_score * 100, color: '#ef4444' },
-        { name: 'Botnet', value: investigation.botnet_probability * 100, color: '#14b8a6' },
-        { name: 'Correlation', value: investigation.peer_correlations.correlation_score * 100, color: '#60a5fa' },
+        { name: 'Drift', value: toPercent(investigation?.anomaly_scores?.drift_score), color: '#f59e0b' },
+        { name: 'Anomaly', value: toPercent(investigation?.anomaly_scores?.anomaly_score), color: '#ef4444' },
+        { name: 'Botnet', value: toPercent(investigation?.botnet_probability), color: '#14b8a6' },
+        { name: 'Correlation', value: toPercent(investigation?.peer_correlations?.correlation_score), color: '#60a5fa' },
       ]
     : [];
 
   if (error) {
     return <div className="panel rounded-3xl p-6 text-red-200">{error}</div>;
+  }
+
+  if (notFound) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <Link className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm soft-label hover:bg-white/10" to="/devices">
+            Back to Devices
+          </Link>
+        </div>
+
+        <section className="surface-card rounded-3xl p-6">
+          <p className="font-mono text-xs uppercase tracking-[0.34em] text-[var(--warning-text)]">Device Unavailable</p>
+          <h2 className="mt-2 font-display text-3xl font-semibold">{deviceId}</h2>
+          <p className="mt-3 max-w-3xl text-sm soft-label">
+            This device is not present in the active dataset anymore. This usually happens after switching the backend dataset or uploading a new CSV.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link className="btn-accent inline-flex rounded-xl px-4 py-2 text-sm font-semibold" to="/devices">
+              Open Current Device List
+            </Link>
+            <Link className="inline-flex rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10" to="/dashboard">
+              Go to Dashboard
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   if (!detail || !investigation) {
@@ -85,7 +134,7 @@ export default function DeviceInvestigation() {
         <p className="font-mono text-xs uppercase tracking-[0.34em] text-[var(--accent-primary)]">Device Investigation</p>
         <h2 className="mt-2 font-display text-3xl font-semibold">{deviceId}</h2>
         <p className="mt-2 max-w-3xl text-sm soft-label">
-          Review anomaly evidence, coordinated peer behavior, gated learning state, and the LLM-generated SOC narrative for this device.
+          Review anomaly evidence, coordinated peer behavior, gated learning state, and the SOC investigation narrative for this device.
         </p>
       </section>
 
@@ -121,6 +170,7 @@ export default function DeviceInvestigation() {
                 <XAxis dataKey="name" stroke="var(--chart-axis)" />
                 <YAxis stroke="var(--chart-axis)" domain={[0, 100]} />
                 <Tooltip
+                  formatter={(value) => [`${Number(value).toFixed(2)}%`, 'Score']}
                   contentStyle={{
                     background: 'var(--chart-tooltip-bg)',
                     border: '1px solid var(--chart-tooltip-border)',
@@ -128,10 +178,11 @@ export default function DeviceInvestigation() {
                     color: 'var(--text-primary)',
                   }}
                 />
-                <Bar dataKey="value" radius={[12, 12, 0, 0]}>
+                <Bar dataKey="value" radius={[12, 12, 0, 0]} minPointSize={5}>
                   {anomalyData.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
+                  <LabelList dataKey="value" position="top" formatter={(value) => `${Number(value).toFixed(1)}%`} fill="var(--text-primary)" fontSize={12} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -165,13 +216,8 @@ export default function DeviceInvestigation() {
         </div>
 
         <div className="surface-card rounded-3xl p-6">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h3 className="font-display text-2xl font-semibold">LLM Explanation</h3>
-            </div>
-            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs soft-label">
-              {llmSummary.provider || 'unknown'}
-            </div>
+          <div className="mb-4">
+            <h3 className="font-display text-2xl font-semibold">Investigation Summary</h3>
           </div>
           <div className="space-y-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">

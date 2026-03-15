@@ -2,7 +2,6 @@
 
 Phantom Nexus is a full-stack cybersecurity prototype for early detection of IoT botnet recruitment from network telemetry. The system ingests CSV telemetry, builds per-device behavior baselines, detects drift and suspicious recruitment patterns, scores trust, correlates peers, gates adaptive learning, and exposes the results through a SOC-style investigation dashboard.
 
-The current prototype is built for demo and exploration rather than offline model training or production deployment. It favors explainable signals, fast dataset refresh, and device-level investigation workflows.
 
 ## What The Current Prototype Does
 
